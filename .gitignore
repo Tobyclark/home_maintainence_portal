@@ -144,3 +144,5 @@ uploads/*.txt
 # Backup files
 *.bak
 *.backup
+
+*.sqlite
