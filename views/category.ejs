@@ -33,7 +33,7 @@
         <strong><%= record.date %></strong> - <%= record.company %> (<%= record.type %>)
         <br><%= record.notes %>
         <% if (record.pdf) { %>
-          <br><a href="/uploads/<%= record.pdf %>" target="_blank">View PDF</a>
+          <br><a href="/record/<%= record.id %>/pdf" target="_blank">View PDF</a>
         <% } %>
       </li>
     <% }); %>

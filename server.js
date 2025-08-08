@@ -7,70 +7,72 @@ const bodyParser = require("body-parser");
 const app = express();
 const PORT = 3000;
 
-// File upload setup
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname)
-});
-const upload = multer({ storage });
+// File upload setup (memory storage for direct-to-db)
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.set("view engine", "ejs");
 
-// Get categories dynamically from folder names
-const getCategories = () => {
-  return fs.readdirSync(path.join(__dirname, "categories")).filter(folder => {
-    return fs.lstatSync(path.join(__dirname, "categories", folder)).isDirectory();
-  });
-};
+const categoriesConfig = JSON.parse(
+  fs.readFileSync(path.join(__dirname, "config", "categories.json"), "utf-8")
+);
+const getCategories = () => categoriesConfig.map(cat => cat.name);
 
-// Load records from category's data.json
-const loadCategoryData = (category) => {
-  const filePath = path.join(__dirname, "categories", category, "data.json");
-  if (!fs.existsSync(filePath)) return [];
-  return JSON.parse(fs.readFileSync(filePath, "utf-8"));
-};
 
-// Save records to category's data.json
-const saveCategoryData = (category, data) => {
-  const filePath = path.join(__dirname, "categories", category, "data.json");
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-};
+
 
 // Home page
-app.get("/", (req, res) => {
-  const categories = getCategories();      // loads folder names in /categories
-  const urgencyList = getUrgencyList();    // builds dashboard data
+app.get("/", async (req, res) => {
+  const categories = getCategories();
+  const urgencyList = await getUrgencyList();
   res.render("index", { categories, urgencyList });
 });
 
+app.get("/record/:id/pdf", async (req, res) => {
+  const record = await Record.findByPk(req.params.id);
+  if (!record || !record.pdfData) {
+    return res.status(404).send("PDF not found");
+  }
+  res.contentType("application/pdf");
+  res.send(record.pdfData);
+});
+
+
 
 // Category page
-app.get("/category/:name", (req, res) => {
+app.get("/category/:name", async (req, res) => {
   const category = req.params.name;
-  const records = loadCategoryData(category);
+  const records = await Record.findAll({
+    where: { category },
+    order: [['date', 'ASC']]
+  });
   res.render("category", { category, records });
 });
 
+
 // Add record
-app.post("/category/:name", upload.single("pdf"), (req, res) => {
+app.post("/category/:name", upload.single("pdf"), async (req, res) => {
   const category = req.params.name;
   const { date, company, type, notes } = req.body;
 
-  const newRecord = {
+  let pdfData = null;
+  let pdf = null;
+  if (req.file) {
+    pdfData = req.file.buffer;
+    pdf = req.file.originalname;
+  }
+
+  await Record.create({
+    category,
     date,
     company,
     type,
     notes,
-    pdf: req.file ? req.file.filename : null
-  };
-
-  const records = loadCategoryData(category);
-  records.push(newRecord);
-  saveCategoryData(category, records);
+    pdf,
+    pdfData
+  });
 
   res.redirect(`/category/${category}`);
 });
@@ -83,24 +85,26 @@ const recommendedConfig = JSON.parse(
   fs.readFileSync(path.join(__dirname, "config", "recommended.json"), "utf-8")
 );
 
+
 // Helper to calculate dashboard urgency
-const getUrgencyList = () => {
+const getUrgencyList = async () => {
   const categories = getCategories();
   let urgencyList = [];
 
-  categories.forEach(cat => {
-    const records = loadCategoryData(cat);
+  for (const cat of categories) {
+    const records = await Record.findAll({
+      where: { category: cat },
+      order: [['date', 'ASC']]
+    });
     const lastRecord = records.length
       ? new Date(records[records.length - 1].date)
       : null;
 
     const config = recommendedConfig[cat];
-    if (!config) return; // skip if no config
+    if (!config) continue; // skip if no config
 
     const now = new Date();
-    const intervalMs = config.intervalDays * 24 * 60 * 60 * 1000;
     let daysSince = lastRecord ? Math.floor((now - lastRecord) / (1000 * 60 * 60 * 24)) : null;
-
     let overdueDays = daysSince !== null ? daysSince - config.intervalDays : null;
 
     urgencyList.push({
@@ -110,7 +114,7 @@ const getUrgencyList = () => {
       overdueDays,
       intervalDays: config.intervalDays
     });
-  });
+  }
 
   // Sort by overdue first (most urgent)
   urgencyList.sort((a, b) => {
@@ -122,3 +126,9 @@ const getUrgencyList = () => {
   return urgencyList;
 };
 
+
+const sequelize = require('./models');
+const Record = require('./models/Record');
+
+// Sync database
+sequelize.sync();
