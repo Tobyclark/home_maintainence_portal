@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= category %> - Home Maintenance</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <h1><%= category %></h1>
+
+  <form action="/category/<%= category %>" method="POST" enctype="multipart/form-data">
+    <label>Date:</label>
+    <input type="date" name="date" required><br>
+
+    <label>Company:</label>
+    <input type="text" name="company" required><br>
+
+    <label>Type of Maintenance:</label>
+    <input type="text" name="type" required><br>
+
+    <label>Notes:</label>
+    <textarea name="notes"></textarea><br>
+
+    <label>Upload PDF:</label>
+    <input type="file" name="pdf" accept="application/pdf"><br><br>
+
+    <button type="submit">Add Record</button>
+  </form>
+
+  <h2>Previous Records</h2>
+  <ul>
+    <% records.forEach(record => { %>
+      <li>
+        <strong><%= record.date %></strong> - <%= record.company %> (<%= record.type %>)
+        <br><%= record.notes %>
+        <% if (record.pdf) { %>
+          <br><a href="/uploads/<%= record.pdf %>" target="_blank">View PDF</a>
+        <% } %>
+      </li>
+    <% }); %>
+  </ul>
+
+  <br>
+  <a href="/">Back to Home</a>
+</body>
+</html>

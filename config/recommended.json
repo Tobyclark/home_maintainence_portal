@@ -1,0 +1,9 @@
+{
+  "Roof Repairs": { "intervalDays": 365, "description": "Inspect and repair roof annually" },
+  "Plumbing": { "intervalDays": 180, "description": "Check for leaks, clogs, and corrosion every 6 months" },
+  "Electrical": { "intervalDays": 365, "description": "Inspect wiring and outlets annually" },
+  "Painting": { "intervalDays": 1095, "description": "Repaint exterior every 3 years" },
+  "Landscaping": { "intervalDays": 90, "description": "Seasonal trimming, planting, and lawn care" },
+  "HVAC": { "intervalDays": 180, "description": "Change filters and inspect system every 6 months" },
+  "Flooring": { "intervalDays": 365, "description": "Inspect and maintain flooring annually" }
+}

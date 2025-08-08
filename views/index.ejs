@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Home Maintenance Portal</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <h1>Home Maintenance Portal</h1>
+
+  <div class="category-container">
+    <% categories.forEach(cat => { %>
+      <a class="category-btn" href="/category/<%= cat %>"><%= cat %></a>
+    <% }); %>
+  </div>
+
+  <h2 style="margin-top: 40px;">Maintenance Dashboard</h2>
+  <table class="dashboard-table">
+    <tr>
+      <th>Category</th>
+      <th>Description</th>
+      <th>Days Since Last</th>
+      <th>Status</th>
+    </tr>
+    <% urgencyList.forEach(item => { 
+         let color = "green";
+         if (item.overdueDays !== null && item.overdueDays > 0) {
+           let redIntensity = Math.min(255, 100 + item.overdueDays * 5);
+           color = `rgb(${redIntensity}, 50, 50)`;
+         } else if (item.overdueDays !== null && item.overdueDays > -7) {
+           color = "orange";
+         }
+    %>
+      <tr style="background-color: <%= color %>; color: white;">
+        <td><%= item.category %></td>
+        <td><%= item.description %></td>
+        <td><%= item.daysSince !== null ? item.daysSince : "No records" %></td>
+        <td>
+          <% if (item.overdueDays === null) { %>
+            No records yet
+          <% } else if (item.overdueDays > 0) { %>
+            Overdue by <%= item.overdueDays %> days
+          <% } else { %>
+            On schedule
+          <% } %>
+        </td>
+      </tr>
+    <% }); %>
+  </table>
+
+</body>
+</html>
