@@ -6,9 +6,6 @@ const bodyParser = require("body-parser");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
 
 // File upload setup (memory storage for direct-to-db)
 const upload = multer({ storage: multer.memoryStorage() });
@@ -80,9 +77,8 @@ app.post("/category/:name", upload.single("pdf"), async (req, res) => {
   res.redirect(`/category/${category}`);
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+
+module.exports = app;
 
 const recommendedConfig = JSON.parse(
   fs.readFileSync(path.join(__dirname, "config", "recommended.json"), "utf-8")
@@ -135,3 +131,5 @@ const Record = require('./models/Record');
 
 // Sync database
 sequelize.sync();
+
+module.exports = app;
