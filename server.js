@@ -5,7 +5,10 @@ const multer = require("multer");
 const bodyParser = require("body-parser");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
 
 // File upload setup (memory storage for direct-to-db)
 const upload = multer({ storage: multer.memoryStorage() });
